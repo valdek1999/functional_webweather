@@ -13,14 +13,14 @@ using WebWeather.Services;
 
 namespace WebWeather.Controllers
 {
-    public class HomeController : Controller
+    public class WeatherController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ILogger<WeatherController> _logger;
 
         private readonly DataWeatherContext _dataWeatherContext;
 
         private readonly WeatherService _weatherService;
-        public HomeController(ILogger<HomeController> logger, DataWeatherContext dataWeatherContext, WeatherService weatherService)
+        public WeatherController(ILogger<WeatherController> logger, DataWeatherContext dataWeatherContext, WeatherService weatherService)
         {
             _logger = logger;
             _dataWeatherContext = dataWeatherContext;
@@ -40,7 +40,7 @@ namespace WebWeather.Controllers
                 var isLoad = await _weatherService.LoadExcelWithWeatherToDb(uploads);
                 if (isLoad)
                 {
-                    _logger.LogInformation($"Controller{nameof(HomeController)}. Загрузка файлов в бд успешно завершилась.");
+                    _logger.LogInformation($"Controller{nameof(WeatherController)}. Загрузка файлов в бд успешно завершилась.");
                     return Ok();
                 }
                 else
@@ -54,7 +54,7 @@ namespace WebWeather.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Controller{nameof(HomeController)}. Error: {ex.Message}.");
+                _logger.LogError($"Controller{nameof(WeatherController)}. Error: {ex.Message}.");
                 return StatusCode(500);
             }
         }

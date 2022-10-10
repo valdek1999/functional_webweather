@@ -53,7 +53,7 @@ function sendContract(){
         formdata.append("uploads", file);
     }
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/Home/AddFile");
+    xhr.open("POST", "/Weather/AddFile");
 
     setInterval(
         function send() {

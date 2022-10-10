@@ -33,27 +33,33 @@ namespace WebWeather.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddFile(IFormFileCollection uploads)
+        public async Task<IActionResult> AddFile(IFormFileCollection excelFiles)
         {
             try
             {
-                var isLoad = await _weatherService.LoadExcelWithWeatherToDb(uploads);
+                //Действие т.к просходит загрузка эксель файлов в бд
+                var isLoad = await _weatherService.LoadExcelWithWeatherToDb(excelFiles);
                 if (isLoad)
                 {
+                    //действие т.к происход вывод лога с информацией
                     _logger.LogInformation($"Controller{nameof(WeatherController)}. Загрузка файлов в бд успешно завершилась.");
+                    
                     return Ok();
                 }
                 else
                 {
-                    foreach(var error in _weatherService.ExcelWeatherHandler.WeatherErrors)
+                    #region Вычисление
+                    foreach (var error in _weatherService.ExcelWeatherHandler.WeatherErrors)
                     {
                         ModelState.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
                     }
                     return BadRequest(ModelState);
+                    #endregion
                 }
             }
             catch (Exception ex)
             {
+                //действие лог зависит от внешнего вызов(файла с ошибкой)
                 _logger.LogError($"Controller{nameof(WeatherController)}. Error: {ex.Message}.");
                 return StatusCode(500);
             }
@@ -64,6 +70,9 @@ namespace WebWeather.Controllers
         {
             try
             {
+                // Формирование запроса - строится дерево запросов, но не идёт запрос в бд - вычисление.
+                // Требуется вынести в отдельную функцию
+                #region Вычисление
                 int pageSize = 10;
 
                 //фильтрация
@@ -88,19 +97,23 @@ namespace WebWeather.Controllers
                         weather = weather.OrderByDescending(w => w.Date).ThenByDescending(w => w.Time);
                         break;
                 }
-
-                // пагинация
-                var count = await weather.CountAsync();
+                #endregion
+                //Идёт запрос в бд для получения кол-во записией в бд с погодой и для формирования списка записей "погод"
+                #region Действие
+                // пагинация                
+                var count = await weather.CountAsync(); // на этом этапе формируется запрос - является действие
                 var items = await weather.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-
-                // формируем модель представления
-                WeathersViewModel viewModel = new WeathersViewModel
+                #endregion
+                //Модель для хранения списка погод. Будем выделять вычисления, чтобы получить данные.
+                #region Преобразуем в данные
+                WeathersViewModel viewModel = new WeathersViewModel 
                 {
                     PageViewModel = new PageViewModel(count, page, pageSize),
                     SortViewModel = new SortViewModel(sortOrder),
                     FilterViewModel = new FilterViewModel(month, year),
                     Weathers = items
                 };
+                #endregion
                 return View(viewModel);
             }
             catch(Exception ex)

@@ -5,8 +5,11 @@ using WebWeather.Models.Excel;
 
 namespace WebWeather.Extensions
 {
-
-    public static class ExcelWeatherHelper
+    /// <summary>
+    /// Класс расширяющий функционал класса ExcelWeatherHelper
+    /// Содержит набор вычислений для работы с эксель файлом для обработки погоды
+    /// </summary>
+    public static class ExcelWeatherHelperExtension
     {
         #region Парсеры ячеек в нужный тип
         public static (bool IsParsed, DateTime Value) GetDateFromCell(this ICell cell)

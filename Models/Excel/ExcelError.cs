@@ -1,5 +1,8 @@
 ﻿namespace WebWeather.Models.Excel
 {
+    /// <summary>
+    /// Модель ошибок. Группа: данные
+    /// </summary>
     public class ExcelError
     {
         public TypeExcelFile Type { get; init; }

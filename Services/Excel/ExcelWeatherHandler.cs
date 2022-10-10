@@ -7,6 +7,9 @@ using WebWeather.Extensions;
 
 namespace WebWeather.Services
 {
+    /// <summary>
+    /// Содержит набор вычислений для работы с эксель файлом для обработки погоды
+    /// </summary>
     public class ExcelWeatherHandler
     {
         public List<ExcelError> WeatherErrors { get; private set; } = new List<ExcelError>();

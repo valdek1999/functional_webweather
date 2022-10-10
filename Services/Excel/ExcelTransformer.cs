@@ -7,6 +7,7 @@ namespace WebWeather.Services
 {
     public static class ExcelTransformer
     {
+        // Действие. Идёт обращение к потоку файлов.
         public static IEnumerable<IWorkbook> TransformFilesToExcel(IFormFileCollection files)
         {
             foreach (var file in files)

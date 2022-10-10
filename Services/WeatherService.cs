@@ -13,7 +13,7 @@ namespace WebWeather.Services
             _dataWeatherRepository = new Repository<Weather, int>(dataWeatherContext);
             ExcelWeatherHandler = new ExcelWeatherHandler();
         }
-
+        //Действие т.к зависит от бд
         public async Task<bool> LoadExcelWithWeatherToDb(IFormFileCollection files)
         {
             foreach (var excelBook in ExcelTransformer.TransformFilesToExcel(files))

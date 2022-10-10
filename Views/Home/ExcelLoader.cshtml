@@ -1,0 +1,22 @@
+﻿@{
+    ViewData["Title"] = "Загрузка эксель файлов с погодой";
+}
+
+
+<div class="text-center loader-weather">
+    <h1></h1>
+    <div>
+        <button id="upload-btn" class="drag-and-drop">
+        <h3 class="drag-and-drop-title">
+            Перетащите файлы для загрузки
+        </h3>
+        </button>
+    </div>    
+    
+    <form name="addfiles" asp-action="AddFile" asp-controller="Home" method="post" enctype="multipart/form-data">
+    <input type="file" name="uploads" id="upload-file" hidden="hidden" accept=".xlsx" multiple/>
+    </form>
+    <input type="submit" value="Загрузить excel файлы" onclick="sendContract()" class="btn btn-send" />
+</div>
+
+<script src="/js/dragAndDrop.js"></script>

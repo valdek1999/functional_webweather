@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  postgres:
+    build:
+        context: ./
+    container_name: 'Postgres'
+    hostname: postgres.ugsk.ru
+    environment:
+      POSTGRES_PASSWORD: Ugsk1234!
+    ports:
+        - 5432:5432

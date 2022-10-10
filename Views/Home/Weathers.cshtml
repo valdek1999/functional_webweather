@@ -1,0 +1,100 @@
+﻿@using WebWeather.DataAccess.Models
+@using WebWeather.Models
+@model WeathersViewModel
+ 
+@{
+    ViewData["Title"] = "Погода в Москве по датам";
+}
+<h1>Погода в Москве по датам</h1>
+<div class="filter-weather">
+<form method="get">
+    <div class="form-inline">
+        <label>Год: </label>
+        <select name="year" asp-items="Model.FilterViewModel.Years" class="form-control">@Model.FilterViewModel.SelectedYear</select>
+         
+        <label>Месяц: </label>
+        <select name="month" asp-items="Model.FilterViewModel.Mouth" class="form-control">@Model.FilterViewModel.SelectedMouth</select>
+ 
+        <input type="submit" value="Фильтр" class="btn btn-outline-dark" />
+    </div>
+</form>
+<form method="get">
+    <div class="form-inline"> 
+        <input type="submit" value="Отменить фильтр" class="btn btn-outline-dark" />
+    </div>
+</form>
+</div>
+ 
+<table class="table">
+    <tr>
+        <th>
+            <a asp-action="Weathers"
+               asp-route-sortOrder="@(Model.SortViewModel.DateSort)"
+               asp-route-year="@(Model.FilterViewModel.SelectedYear)"
+               asp-route-month="@(Model.FilterViewModel.SelectedMouth)">Дата(мм.дд.уууу)</a>
+        </th>
+        <th>
+            <a>Время</a>
+        </th>
+        <th>
+            <a>T</a>
+        </th>
+        <th>
+            <a>Воздух, %</a>
+        </th>
+        <th>
+            <a>Td</a>
+        </th>
+        <th>
+            <a>Давление</a>
+        </th>
+        <th>
+            <a>Направление ветра</a>
+        </th>
+        <th>
+            <a>Скорость</a>
+        </th>
+        <th>
+            <a>Облачность %</a>
+        </th>
+        <th>
+            <a>h</a>
+        </th>
+        <th>
+            <a>VV</a>
+        </th>
+        <th>
+            <a>Погодные явления</a>
+        </th>
+    </tr>
+    @foreach (Weather u in Model.Weathers)
+    {
+        <tr><td>@u.Date.ToString("dd.MM.yyyy")</td><td>@u.Time.ToString("HH:mm")</td><td>@u.AirTemperature</td><td>@u.AirHumidity</td>
+            <td>@u.DewPointTemperature</td><td>@u.AtmosphericPressure</td><td>@u.WindDirection</td><td>@u.WindSpeed</td><td>@u.Cloudiness</td>
+            <td>@u.LowerCloudinessLimit</td><td>@u.HorizontalVisibility</td><td>@u.WeatherEvent</td></tr>
+    }
+</table>
+@if (Model.PageViewModel.HasPreviousPage)
+{
+    <a asp-action="Weathers"
+       asp-route-page="@(Model.PageViewModel.PageNumber - 1)"
+       asp-route-year="@(Model.FilterViewModel.SelectedYear)"
+       asp-route-month="@(Model.FilterViewModel.SelectedMouth)"
+       asp-route-sortorder="@(Model.SortViewModel.Current)"
+       class="btn  btn-outline-dark">
+        <i class="glyphicon glyphicon-chevron-left"></i>
+        Назад
+    </a>
+}
+@if (Model.PageViewModel.HasNextPage)
+{
+    <a asp-action="Weathers"
+       asp-route-page="@(Model.PageViewModel.PageNumber + 1)"
+       asp-route-year="@(Model.FilterViewModel.SelectedYear)"
+       asp-route-month="@(Model.FilterViewModel.SelectedMouth)"
+       asp-route-sortorder="@(Model.SortViewModel.Current)"
+       class="btn btn-outline-dark">
+        Вперед
+        <i class="glyphicon glyphicon-chevron-right"></i>
+    </a>
+}

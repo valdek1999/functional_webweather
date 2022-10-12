@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using WebWeather.DataAccess;
 using WebWeather.DataAccess.Models;
 using WebWeather.Services;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace WebWeather.Controllers
 {
@@ -51,7 +52,8 @@ namespace WebWeather.Controllers
                 else
                 {
                     #region Вычисление
-                    return GetErrorsAboutParsingWeather(weatherService);
+                    var modelStateWithErros = GetErrorsAboutParsingOfWeathers(weatherService, ModelState);
+                    return BadRequest(modelStateWithErros);
                     #endregion
                 }
             }
@@ -63,13 +65,14 @@ namespace WebWeather.Controllers
             }
         }
 
-        private IActionResult GetErrorsAboutParsingWeather(WeatherService weatherService)
+        private ModelStateDictionary GetErrorsAboutParsingOfWeathers(WeatherService weatherService, ModelStateDictionary modelState)
         {
+            var model = modelState.Copy();
             foreach (var error in weatherService.ExcelWeatherHandler.WeatherErrors)
             {
-                ModelState.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
+                model.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
             }
-            return BadRequest(ModelState);
+            return model;
         }
 
         public async Task<IActionResult> Weathers(int? year, int? month, int page = 1,

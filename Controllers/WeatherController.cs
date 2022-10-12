@@ -11,6 +11,7 @@ using WebWeather.DataAccess;
 using WebWeather.DataAccess.Models;
 using WebWeather.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Collections.Generic;
 
 namespace WebWeather.Controllers
 {
@@ -118,21 +119,17 @@ namespace WebWeather.Controllers
                 #endregion
                 //Модель для хранения списка погод. Будем выделять вычисления, чтобы получить данные.
                 #region Преобразуем в данные
-                WeathersViewModel viewModel = new WeathersViewModel 
-                {
-                    PageViewModel = new PageViewModel(count, page, pageSize),
-                    SortViewModel = new SortViewModel(sortOrder),
-                    FilterViewModel = new FilterViewModel(month, year),
-                    Weathers = items
-                };
+                WeathersViewModel viewModel = WeathersViewModel.Create(year, month, page, sortOrder, pageSize, count, items);
                 #endregion
                 return View(viewModel);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return RedirectToAction("Error");
             }
         }
+
+        
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

@@ -81,55 +81,80 @@ namespace WebWeather.Controllers
         {
             try
             {
-                using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext();
+                using var dataWeatherContext = _dataWeatherContextFactory.CreateDbContext();
 
-                // Формирование запроса - строится дерево запросов, но не идёт запрос в бд - вычисление.
+                // Формирование дерево запроса - строится дерево запросов, но не идёт запрос в бд - вычисление.
                 // Требуется вынести в отдельную функцию
                 #region Вычисление
                 int pageSize = 10;
-
-                //фильтрация
-                IQueryable<Weather> weather = _dataWeatherContext.Weather;
-
-                if (year != null)
-                {
-                    weather = weather.Where(w => w.Date.Year == year);
-                }
-                if (month != null)
-                {
-                    weather = weather.Where(w => w.Date.Month == month);
-                }
+                IQueryable<Weather> weathers = GetWeatherQueryableBy(dataWeatherContext);
+                weathers = GetWeathersFilteredByYearAndMonth(year, month, weathers);
 
                 //сортировка
-                switch (sortOrder)
-                {
-                    case SortState.DateAsc:
-                        weather = weather.OrderBy(w => w.Date).ThenBy(w => w.Time);
-                        break;
-                    case SortState.DateDesc:
-                        weather = weather.OrderByDescending(w => w.Date).ThenByDescending(w => w.Time);
-                        break;
-                }
+                weathers = SortWeathersByOrderType(sortOrder, weathers);
                 #endregion
                 //Идёт запрос в бд для получения кол-во записией в бд с погодой и для формирования списка записей "погод"
                 #region Действие
                 // пагинация                
-                var count = await weather.CountAsync(); // на этом этапе формируется запрос - является действие
-                var items = await weather.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+                int count = await GetCountOfWeathers(weathers); // на этом этапе формируется запрос в бд - является действие
+                List<Weather> weathersSlice = await GetSliceOfWeathers(page, pageSize, weathers); // на этом этапе формируется запрос в бд - является действие
                 #endregion
                 //Модель для хранения списка погод. Будем выделять вычисления, чтобы получить данные.
                 #region Преобразуем в данные
-                WeathersViewModel viewModel = WeathersViewModel.Create(year, month, page, sortOrder, pageSize, count, items);
+                WeathersViewModel viewModel = WeathersViewModel.Create(year, month, page, sortOrder, pageSize, count, weathersSlice);
                 #endregion
                 return View(viewModel);
             }
-            catch (Exception ex)
+            catch
             {
                 return RedirectToAction("Error");
             }
         }
 
-        
+        private static async Task<List<Weather>> GetSliceOfWeathers(int page, int pageSize, IQueryable<Weather> weathers)
+        {
+            return await weathers.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
+
+        private static async Task<int> GetCountOfWeathers(IQueryable<Weather> weathers)
+        {
+            return await weathers.CountAsync();
+        }
+
+        private static IQueryable<Weather> GetWeatherQueryableBy(DataWeatherContext dataWeatherContext)
+        {
+            return dataWeatherContext.Weather.AsQueryable();
+        }
+
+        private static IQueryable<Weather> GetWeathersFilteredByYearAndMonth(int? year, int? month, IQueryable<Weather> weathers)
+        {
+            if (year != null)
+            {
+                weathers = weathers.Where(w => w.Date.Year == year);
+            }
+            if (month != null)
+            {
+                weathers = weathers.Where(w => w.Date.Month == month);
+            }
+
+            return weathers;
+        }
+
+        private static IQueryable<Weather> SortWeathersByOrderType(SortState sortOrder, IQueryable<Weather> weather)
+        {
+            switch (sortOrder)
+            {
+                case SortState.DateAsc:
+                    weather = weather.OrderBy(w => w.Date).ThenBy(w => w.Time);
+                    break;
+                case SortState.DateDesc:
+                    weather = weather.OrderByDescending(w => w.Date).ThenByDescending(w => w.Time);
+                    break;
+            }
+
+            return weather;
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

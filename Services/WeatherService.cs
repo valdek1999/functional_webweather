@@ -8,7 +8,7 @@ namespace WebWeather.Services
     {
         private readonly Repository<Weather, int> _dataWeatherRepository;
         public ExcelWeatherHandler ExcelWeatherHandler { get; }
-        public WeatherService(DataWeatherContext dataWeatherContext)
+        private WeatherService(DataWeatherContext dataWeatherContext)
         {
             _dataWeatherRepository = new Repository<Weather, int>(dataWeatherContext);
             ExcelWeatherHandler = new ExcelWeatherHandler();
@@ -36,5 +36,11 @@ namespace WebWeather.Services
             }
             return true;
         }
+
+        public static WeatherService Create(DataWeatherContext dataWeatherContext)
+        {
+            return new WeatherService(dataWeatherContext);
+        }
+
     }
 }

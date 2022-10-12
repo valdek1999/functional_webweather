@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using WebWeather.DataAccess.Models;
 
 namespace WebWeather.DataAccess
@@ -11,7 +12,7 @@ namespace WebWeather.DataAccess
         {
             if (!isCreatingOfMigration)
             {
-                Database.Migrate();
+                Database.MigrateAsync().Wait();
             }
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)

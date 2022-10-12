@@ -64,9 +64,7 @@ namespace WebWeather
     {        
         public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
-            string connection = configuration.GetConnectionString("DataWeatherContext");
-            services.AddDbContext<DataWeatherContext>(options => options.UseNpgsql(connection), ServiceLifetime.Singleton);
-            services.AddScoped<WeatherService>();
+            services.AddScoped<IDbContextFactory<DataWeatherContext>, WeatherContextFactory>();
         }
     }
 }

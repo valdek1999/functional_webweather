@@ -17,14 +17,11 @@ namespace WebWeather.Controllers
     {
         private readonly ILogger<WeatherController> _logger;
 
-        private readonly DataWeatherContext _dataWeatherContext;
-
-        private readonly WeatherService _weatherService;
-        public WeatherController(ILogger<WeatherController> logger, DataWeatherContext dataWeatherContext, WeatherService weatherService)
+        private readonly IDbContextFactory<DataWeatherContext> _dataWeatherContextFactory;
+        public WeatherController(ILogger<WeatherController> logger, IDbContextFactory<DataWeatherContext> dataWeatherContextFactory)
         {
             _logger = logger;
-            _dataWeatherContext = dataWeatherContext;
-            _weatherService = weatherService;
+            _dataWeatherContextFactory = dataWeatherContextFactory;
         }
 
         public IActionResult ExcelLoader()
@@ -37,8 +34,13 @@ namespace WebWeather.Controllers
         {
             try
             {
+                // добавили фабричный метод(действие, т.к идёт обращение к переменным окружения) по созданию контекста к бд
+                using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); 
+
+                var weatherService = WeatherService.Create(_dataWeatherContext);// добавил фабричный метод(вычисление) для созданию сущности WeatherService 
+
                 //Действие т.к просходит загрузка эксель файлов в бд
-                var isLoad = await _weatherService.LoadExcelWithWeatherToDb(excelFiles);
+                var isLoad = await weatherService.LoadExcelWithWeatherToDb(excelFiles);
                 if (isLoad)
                 {
                     //действие т.к происход вывод лога с информацией
@@ -49,11 +51,7 @@ namespace WebWeather.Controllers
                 else
                 {
                     #region Вычисление
-                    foreach (var error in _weatherService.ExcelWeatherHandler.WeatherErrors)
-                    {
-                        ModelState.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
-                    }
-                    return BadRequest(ModelState);
+                    return GetErrorsAboutParsingWeather(weatherService);
                     #endregion
                 }
             }
@@ -65,11 +63,22 @@ namespace WebWeather.Controllers
             }
         }
 
+        private IActionResult GetErrorsAboutParsingWeather(WeatherService weatherService)
+        {
+            foreach (var error in weatherService.ExcelWeatherHandler.WeatherErrors)
+            {
+                ModelState.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
+            }
+            return BadRequest(ModelState);
+        }
+
         public async Task<IActionResult> Weathers(int? year, int? month, int page = 1,
             SortState sortOrder = SortState.DateAsc)
         {
             try
             {
+                using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext();
+
                 // Формирование запроса - строится дерево запросов, но не идёт запрос в бд - вычисление.
                 // Требуется вынести в отдельную функцию
                 #region Вычисление

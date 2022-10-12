@@ -14,7 +14,7 @@
     </div>    
     
     <form name="addfiles" asp-action="AddFile" asp-controller="Weather" method="post" enctype="multipart/form-data">
-    <input type="file" name="uploads" id="upload-file" hidden="hidden" accept=".xlsx" multiple/>
+    <input type="file" name="excelFiles" id="upload-file" hidden="hidden" accept=".xlsx" multiple/>
     </form>
     <input type="submit" value="Загрузить excel файлы" onclick="sendContract()" class="btn btn-send" />
 </div>

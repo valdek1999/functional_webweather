@@ -50,7 +50,7 @@ function sendContract(){
     
     for (; i < len; i++) {
         file = this.files[i];
-        formdata.append("uploads", file);
+        formdata.append("excelFiles", file);
     }
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/Weather/AddFile");

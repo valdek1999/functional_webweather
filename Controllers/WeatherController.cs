@@ -12,6 +12,7 @@ using WebWeather.DataAccess.Models;
 using WebWeather.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Collections.Generic;
+using WebWeather.Models.Excel;
 
 namespace WebWeather.Controllers
 {
@@ -37,17 +38,16 @@ namespace WebWeather.Controllers
             try
             {
                 using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); // Действие, обращение к бд.
-                var weatherService = WeatherService.Create(_dataWeatherContext);// Вычисление
-                var isLoad = await weatherService.LoadExcelWithWeatherToDb(excelFiles); //Действие
+                var excelErrors = await WeatherService.LoadExcelWithWeatherToDb(excelFiles, _dataWeatherContext); //Действие
 
-                if (isLoad)
+                if (excelErrors?.Count == 0)
                 {
                     _logger.LogInformation($"Controller{nameof(WeatherController)}. Загрузка файлов в бд успешно завершилась.");//Действие
                     return Ok();
                 }
                 else
                 {
-                    var modelStateWithErros = GetErrorsAboutParsingOfWeathers(weatherService, ModelState);// Вычисление
+                    var modelStateWithErros = GetErrorsAboutParsingOfWeathers(excelErrors, ModelState);// Вычисление
                     return BadRequest(modelStateWithErros);
                 }
             }
@@ -140,13 +140,13 @@ namespace WebWeather.Controllers
             return weatherQuery;
         }
 
-        private ModelStateDictionary GetErrorsAboutParsingOfWeathers(WeatherService weatherService, ModelStateDictionary modelState)
+        private ModelStateDictionary GetErrorsAboutParsingOfWeathers(List<ExcelError> weatherErrors, ModelStateDictionary modelState)
         {
             var model = modelState.Copy();
-            foreach (var error in weatherService.ExcelWeatherHandler.WeatherErrors)
-            {
-                model.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
-            }
+            weatherErrors.ForEach(error => model.AddModelError($"Ошибка в ячейке {error.TypeCell}",
+                                                               $"Лист:{error.Sheet}; " +
+                                                               $"Строка:{error.Row}; " +
+                                                               $"Столбец:{error.Column};"));
             return model;
         }
     }

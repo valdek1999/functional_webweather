@@ -1,5 +1,6 @@
 ﻿using NPOI.SS.UserModel;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using WebWeather.Models.Excel;
 
@@ -52,81 +53,6 @@ namespace WebWeather.Extensions
 
         #endregion
 
-        #region Проверка на валидность
-
-        /// <summary>
-        /// Проверка на валидность строки
-        /// </summary>
-        /// <param name="row"></param>
-        /// <returns></returns>
-        public static bool CheckValid(this IRow row)
-        {
-            var cellTypes = Enum.GetValues<WeatherCell>();
-            foreach (var cellType in cellTypes)
-            {
-                if (row.Cells.Count <= (int)cellType)
-                {
-                    return true;
-                }
-                var cell = row.GetCellFromRowByType(cellType);
-                if (cell.CheckValid(cellType) is false)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Проверка на валидность ячейки
-        /// </summary>
-        /// <param name="cell"></param>
-        /// <param name="cellType"></param>
-        /// <returns></returns>
-        public static bool CheckValid(this ICell cell, WeatherCell cellType)
-        {
-            switch (cellType)
-            {
-                case WeatherCell.Date:
-                    return DateTime.TryParseExact(cell.ToString().Trim(), "dd.MM.yyyy", new CultureInfo("ru-Ru"), DateTimeStyles.AssumeLocal, out _);
-                case WeatherCell.Time:
-                    return DateTime.TryParseExact(cell.ToString().Trim(), "H:m", new CultureInfo("ru-Ru"), DateTimeStyles.AssumeLocal, out var _);
-                case WeatherCell.AirTemperature:
-                case WeatherCell.DewPointTemperature:
-                case WeatherCell.AirHumidity:
-                    return float.TryParse(cell.ToString(), out _);
-                case WeatherCell.AtmosphericPressure:
-                    return int.TryParse(cell.ToString(), out _);
-                case WeatherCell.WindSpeed:
-                case WeatherCell.Cloudiness:
-                    if (string.IsNullOrEmpty(cell.ToString().Replace(" ", "")) || cell.CellType == CellType.Blank)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return int.TryParse(cell.ToString(), out _);
-                    }
-                case WeatherCell.LowerCloudinessLimit:
-                    if (string.IsNullOrEmpty(cell.ToString().Replace(" ", "")) || cell.CellType == CellType.Blank)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return float.TryParse(cell.ToString(), out _);
-                    }
-                case WeatherCell.WindDirection:
-                case WeatherCell.WeatherEvent:
-                case WeatherCell.HorizontalVisibility:
-                    return true;
-                default:
-                    return true;
-            }
-        }
-
-        #endregion
-
         /// <summary>
         /// Получение ячейки из строки по типу ячейки
         /// </summary>
@@ -137,5 +63,7 @@ namespace WebWeather.Extensions
         {
             return row.GetCell((int)weatherCellType);
         }
+        
+       
     }
 }

@@ -2,45 +2,34 @@
 using System.Threading.Tasks;
 using WebWeather.DataAccess;
 using WebWeather.DataAccess.Models;
+using System.Linq;
+using WebWeather.Models.Excel;
+using System.Collections.Generic;
+using NPOI.SS.UserModel;
+
 namespace WebWeather.Services
 {
-    public class WeatherService
+    public static class WeatherService
     {
-        private readonly Repository<Weather, int> _dataWeatherRepository;
-        public ExcelWeatherHandler ExcelWeatherHandler { get; }
-        private WeatherService(DataWeatherContext dataWeatherContext)
-        {
-            _dataWeatherRepository = new Repository<Weather, int>(dataWeatherContext);
-            ExcelWeatherHandler = new ExcelWeatherHandler();
-        }
         //Действие т.к зависит от бд
-        public async Task<bool> LoadExcelWithWeatherToDb(IFormFileCollection files)
+        public static async Task<List<ExcelError>> LoadExcelWithWeatherToDb(IFormFileCollection files, DataWeatherContext dataWeatherContext)
         {
+            List<ExcelError> excelErrors = new List<ExcelError>();
+
             foreach (var excelBook in ExcelTransformer.TransformFilesToExcel(files))
             {
                 foreach (var sheet in excelBook)
                 {
-                    foreach (var weatherData in ExcelWeatherHandler.GetWeatherDataEnumerator(sheet))
+                    var (Weathers, WeatherErrors, HasSomeError) = ExcelWeatherHandler.GetWeatherDataEnumerator(sheet);
+                    if (HasSomeError)
                     {
-                        await _dataWeatherRepository.AddAsync(weatherData);
+                        return WeatherErrors;
                     }
-                    if (ExcelWeatherHandler.HasSomeError)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        await _dataWeatherRepository.SaveAsync();
-                    }
+                    dataWeatherContext.AddRange(Weathers);
+                    await dataWeatherContext.SaveChangesAsync();
                 }
             }
-            return true;
+            return excelErrors;
         }
-
-        public static WeatherService Create(DataWeatherContext dataWeatherContext)
-        {
-            return new WeatherService(dataWeatherContext);
-        }
-
     }
 }

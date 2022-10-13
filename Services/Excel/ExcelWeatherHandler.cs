@@ -4,38 +4,33 @@ using NPOI.SS.UserModel;
 using System;
 using WebWeather.DataAccess.Models;
 using WebWeather.Extensions;
+using System.Linq;
+using System.Globalization;
 
 namespace WebWeather.Services
 {
     /// <summary>
     /// Содержит набор вычислений для работы с эксель файлом для обработки погоды
     /// </summary>
-    public class ExcelWeatherHandler
+    public static class ExcelWeatherHandler
     {
-        public List<ExcelError> WeatherErrors { get; private set; } = new List<ExcelError>();
-        public bool HasSomeError { get; private set; } = false;
-
         /// <summary>
         /// Получить иттератор данных о погоде по листу
         /// </summary>
         /// <param name="sheet"></param>
         /// <returns></returns>
-        public IEnumerable<Weather> GetWeatherDataEnumerator(ISheet sheet)
+        public static (List<Weather> Weathers, List<ExcelError> WeatherErrors, bool HasSomeError) GetWeatherDataEnumerator(ISheet sheet)
         {
+            var weathers = new List<Weather>();
             var startRow = SearchOfStartingRowBySheet(sheet);
-            for (int i = startRow; i < sheet.LastRowNum; i++)
+            var errorRow = GetRows(sheet, startRow).FirstOrDefault(row => CheckValid(row) is false);
+            var errors = SearchErrorsInRow(errorRow);
+            var hasSomeError = errors?.Count > 0;
+            if(hasSomeError is not true)
             {
-                var row = sheet.GetRow(i);
-                if (row.CheckValid() is false)
-                {
-                    var erros = SearchErrorsInRow(row);
-                    WeatherErrors.AddRange(erros);
-                    HasSomeError = true;
-                    break;
-                }
-                var weather = GetWeatherData(row);
-                yield return weather;
+                weathers = GetRows(sheet, startRow).Select(row => GetWeatherData(row)).ToList();
             }
+            return (weathers, errors, hasSomeError);
         }
         /// <summary>
         /// Получить модель данных о погоде по строке листа
@@ -75,7 +70,7 @@ namespace WebWeather.Services
             {
                 var row = sheet.GetRow(i);
 
-                if (row.CheckValid())
+                if (CheckValid(row))
                 {
                     return i;
                 }
@@ -92,6 +87,10 @@ namespace WebWeather.Services
         {
             var cellTypes = Enum.GetValues<WeatherCell>();
             var excelErrors = new List<ExcelError>();
+            if(row is null)
+            {
+                return excelErrors;
+            }
             foreach (var cellType in cellTypes)
             {
                 if (row.Cells.Count <= (int)cellType)
@@ -115,5 +114,94 @@ namespace WebWeather.Services
             }
             return excelErrors;
         }
+
+        /// <summary>
+        /// Итератор возвращающий список строк - вычисление
+        /// </summary>
+        /// <param name="sheet"></param>
+        /// <param name="startRow"></param>
+        /// <returns></returns>
+        public static IEnumerable<IRow> GetRows(ISheet sheet, int startRow)
+        {
+            for (int i = startRow; i < sheet.LastRowNum; i++)
+            {
+                yield return sheet.GetRow(i);
+            }
+        }
+
+        #region Проверка на валидность
+
+        /// <summary>
+        /// Проверка на валидность строки
+        /// </summary>
+        /// <param name="row"></param>
+        /// <returns></returns>
+        public static bool CheckValid(IRow row)
+        {
+            var cellTypes = Enum.GetValues<WeatherCell>();
+            foreach (var cellType in cellTypes)
+            {
+                if (row.Cells.Count <= (int)cellType)
+                {
+                    return true;
+                }
+                var cell = row.GetCellFromRowByType(cellType);
+                if (cell.CheckValid(cellType) is false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Проверка на валидность ячейки
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <param name="cellType"></param>
+        /// <returns></returns>
+        public static bool CheckValid(this ICell cell, WeatherCell cellType)
+        {
+            switch (cellType)
+            {
+                case WeatherCell.Date:
+                    return DateTime.TryParseExact(cell.ToString().Trim(), "dd.MM.yyyy", new CultureInfo("ru-Ru"), DateTimeStyles.AssumeLocal, out _);
+                case WeatherCell.Time:
+                    return DateTime.TryParseExact(cell.ToString().Trim(), "H:m", new CultureInfo("ru-Ru"), DateTimeStyles.AssumeLocal, out var _);
+                case WeatherCell.AirTemperature:
+                case WeatherCell.DewPointTemperature:
+                case WeatherCell.AirHumidity:
+                    return float.TryParse(cell.ToString(), out _);
+                case WeatherCell.AtmosphericPressure:
+                    return int.TryParse(cell.ToString(), out _);
+                case WeatherCell.WindSpeed:
+                case WeatherCell.Cloudiness:
+                    if (string.IsNullOrEmpty(cell.ToString().Replace(" ", "")) || cell.CellType == CellType.Blank)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return int.TryParse(cell.ToString(), out _);
+                    }
+                case WeatherCell.LowerCloudinessLimit:
+                    if (string.IsNullOrEmpty(cell.ToString().Replace(" ", "")) || cell.CellType == CellType.Blank)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return float.TryParse(cell.ToString(), out _);
+                    }
+                case WeatherCell.WindDirection:
+                case WeatherCell.WeatherEvent:
+                case WeatherCell.HorizontalVisibility:
+                    return true;
+                default:
+                    return true;
+            }
+        }
+        #endregion
+
     }
 }

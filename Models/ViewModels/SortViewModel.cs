@@ -16,5 +16,9 @@
             DateSort = sortOrder == SortState.DateAsc ? SortState.DateDesc : SortState.DateAsc;
             Current = sortOrder;
         }
+
+        public SortViewModel(WeathersFilter weathersFilter) :this(weathersFilter.sortOrder)
+        {
+        }
     }
 }

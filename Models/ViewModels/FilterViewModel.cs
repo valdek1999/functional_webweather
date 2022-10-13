@@ -13,6 +13,11 @@ namespace WebWeather.Models
             SelectedMouth = mouth;
             SelectedYear = year;
         }
+
+        public FilterViewModel(WeathersFilter weathersFilter):this(weathersFilter.month, weathersFilter.year)
+        {
+
+        }
         public SelectList Years { get; private set; } // список годов
         public SelectList Mouth { get; private set; } // список месяцев
         public int? SelectedMouth { get; private set; }   // выбранный месяц

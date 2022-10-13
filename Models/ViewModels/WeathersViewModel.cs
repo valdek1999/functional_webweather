@@ -10,13 +10,14 @@ namespace WebWeather.Models
         public FilterViewModel FilterViewModel { get; set; }
         public SortViewModel SortViewModel { get; set; }
 
-        public static WeathersViewModel Create(int? year, int? month, int page, SortState sortOrder, int pageSize, int count, List<Weather> items)
+        public static WeathersViewModel Create(WeathersFilter weathersFilter, List<Weather> items)
         {
+
             return new WeathersViewModel
             {
-                PageViewModel = new PageViewModel(count, page, pageSize),
-                SortViewModel = new SortViewModel(sortOrder),
-                FilterViewModel = new FilterViewModel(month, year),
+                PageViewModel = new PageViewModel(weathersFilter),
+                SortViewModel = new SortViewModel(weathersFilter),
+                FilterViewModel = new FilterViewModel(weathersFilter),
                 Weathers = items
             };
         }

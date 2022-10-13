@@ -13,6 +13,16 @@ namespace WebWeather.Models
             TotalPages = (int)Math.Ceiling(count / (double)pageSize);
         }
 
+        public PageViewModel(WeathersFilter weathersFilter)
+        {
+            var page = weathersFilter.page;
+            var pageSize = weathersFilter.pageSize;
+            var count = weathersFilter.count;
+
+            PageNumber = page;
+            TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+        }
+
         public bool HasPreviousPage
         {
             get

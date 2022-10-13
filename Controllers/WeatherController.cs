@@ -36,26 +36,19 @@ namespace WebWeather.Controllers
         {
             try
             {
-                // добавили фабричный метод(действие, т.к идёт обращение к переменным окружения) по созданию контекста к бд
-                using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); 
+                using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); // Действие, обращение к бд.
+                var weatherService = WeatherService.Create(_dataWeatherContext);// Вычисление
+                var isLoad = await weatherService.LoadExcelWithWeatherToDb(excelFiles); //Действие
 
-                var weatherService = WeatherService.Create(_dataWeatherContext);// добавил фабричный метод(вычисление) для созданию сущности WeatherService 
-
-                //Действие т.к просходит загрузка эксель файлов в бд
-                var isLoad = await weatherService.LoadExcelWithWeatherToDb(excelFiles);
                 if (isLoad)
                 {
-                    //действие т.к происход вывод лога с информацией
-                    _logger.LogInformation($"Controller{nameof(WeatherController)}. Загрузка файлов в бд успешно завершилась.");
-                    
+                    _logger.LogInformation($"Controller{nameof(WeatherController)}. Загрузка файлов в бд успешно завершилась.");//Действие
                     return Ok();
                 }
                 else
                 {
-                    #region Вычисление
-                    var modelStateWithErros = GetErrorsAboutParsingOfWeathers(weatherService, ModelState);
+                    var modelStateWithErros = GetErrorsAboutParsingOfWeathers(weatherService, ModelState);// Вычисление
                     return BadRequest(modelStateWithErros);
-                    #endregion
                 }
             }
             catch (Exception ex)
@@ -66,53 +59,43 @@ namespace WebWeather.Controllers
             }
         }
 
-        private ModelStateDictionary GetErrorsAboutParsingOfWeathers(WeatherService weatherService, ModelStateDictionary modelState)
-        {
-            var model = modelState.Copy();
-            foreach (var error in weatherService.ExcelWeatherHandler.WeatherErrors)
-            {
-                model.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
-            }
-            return model;
-        }
-
-        public async Task<IActionResult> Weathers(int? year, int? month, int page = 1,
-            SortState sortOrder = SortState.DateAsc)
+        [HttpGet]
+        public async Task<IActionResult> Weathers([FromQuery]WeathersFilter weathersFilter)
         {
             try
             {
-                using var dataWeatherContext = _dataWeatherContextFactory.CreateDbContext();
+                using var dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); // Действие
 
-                // Формирование дерево запроса - строится дерево запросов, но не идёт запрос в бд - вычисление.
-                // Требуется вынести в отдельную функцию
-                #region Вычисление
-                int pageSize = 10;
-                IQueryable<Weather> weathers = GetWeatherQueryableBy(dataWeatherContext);
-                weathers = GetWeathersFilteredByYearAndMonth(year, month, weathers);
+                IQueryable<Weather> weatherQuery = GetWeatherQueryableBy(dataWeatherContext); // Вычисление - формирование дерева запроса
+                weatherQuery = GetWeathersFilteredByYearAndMonth(weathersFilter, weatherQuery); // Вычисление
+                weatherQuery = SortWeathersByOrderType(weathersFilter, weatherQuery);      // Вычисление
 
-                //сортировка
-                weathers = SortWeathersByOrderType(sortOrder, weathers);
-                #endregion
-                //Идёт запрос в бд для получения кол-во записией в бд с погодой и для формирования списка записей "погод"
-                #region Действие
-                // пагинация                
-                int count = await GetCountOfWeathers(weathers); // на этом этапе формируется запрос в бд - является действие
-                List<Weather> weathersSlice = await GetSliceOfWeathers(page, pageSize, weathers); // на этом этапе формируется запрос в бд - является действие
-                #endregion
-                //Модель для хранения списка погод. Будем выделять вычисления, чтобы получить данные.
-                #region Преобразуем в данные
-                WeathersViewModel viewModel = WeathersViewModel.Create(year, month, page, sortOrder, pageSize, count, weathersSlice);
-                #endregion
+                int count = await GetCountOfWeathers(weatherQuery); // Действие
+                List<Weather> weathersSlice = await GetSliceOfWeathers(weathersFilter, weatherQuery); // Действие
+
+                weathersFilter = weathersFilter with { count = count }; // Создаём новый объект данных на основе исходного
+                WeathersViewModel viewModel = WeathersViewModel.Create(weathersFilter, weathersSlice); // Вычисление по созданию данных
                 return View(viewModel);
             }
             catch
             {
                 return RedirectToAction("Error");
             }
+        } 
+        
+        
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        private static async Task<List<Weather>> GetSliceOfWeathers(int page, int pageSize, IQueryable<Weather> weathers)
+
+        private static async Task<List<Weather>> GetSliceOfWeathers(WeathersFilter weathersFilter, IQueryable<Weather> weathers)
         {
+            var page = weathersFilter.page;
+            var pageSize = weathersFilter.pageSize;           
             return await weathers.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
@@ -126,40 +109,46 @@ namespace WebWeather.Controllers
             return dataWeatherContext.Weather.AsQueryable();
         }
 
-        private static IQueryable<Weather> GetWeathersFilteredByYearAndMonth(int? year, int? month, IQueryable<Weather> weathers)
+        private static IQueryable<Weather> GetWeathersFilteredByYearAndMonth(WeathersFilter weathersFilter, IQueryable<Weather> weatherQuery)
         {
+            var year = weathersFilter.year;
+            var month = weathersFilter.month;
             if (year != null)
             {
-                weathers = weathers.Where(w => w.Date.Year == year);
+                weatherQuery = weatherQuery.Where(w => w.Date.Year == year);
             }
             if (month != null)
             {
-                weathers = weathers.Where(w => w.Date.Month == month);
+                weatherQuery = weatherQuery.Where(w => w.Date.Month == month);
             }
 
-            return weathers;
+            return weatherQuery;
         }
 
-        private static IQueryable<Weather> SortWeathersByOrderType(SortState sortOrder, IQueryable<Weather> weather)
+        private static IQueryable<Weather> SortWeathersByOrderType(WeathersFilter weathersFilter, IQueryable<Weather> weatherQuery)
         {
-            switch (sortOrder)
+            switch (weathersFilter.sortOrder)
             {
                 case SortState.DateAsc:
-                    weather = weather.OrderBy(w => w.Date).ThenBy(w => w.Time);
+                    weatherQuery = weatherQuery.OrderBy(w => w.Date).ThenBy(w => w.Time);
                     break;
                 case SortState.DateDesc:
-                    weather = weather.OrderByDescending(w => w.Date).ThenByDescending(w => w.Time);
+                    weatherQuery = weatherQuery.OrderByDescending(w => w.Date).ThenByDescending(w => w.Time);
                     break;
             }
 
-            return weather;
+            return weatherQuery;
         }
 
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        private ModelStateDictionary GetErrorsAboutParsingOfWeathers(WeatherService weatherService, ModelStateDictionary modelState)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var model = modelState.Copy();
+            foreach (var error in weatherService.ExcelWeatherHandler.WeatherErrors)
+            {
+                model.AddModelError($"Ошибка в ячейке {error.TypeCell}", $"Лист:{error.Sheet}; Строка:{error.Row}; Столбец:{error.Column};");
+            }
+            return model;
         }
     }
 }
+

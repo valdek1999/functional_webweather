@@ -1,24 +1,24 @@
 ﻿using System.Collections.Generic;
 using WebWeather.DataAccess.Models;
+using WebWeather.Services.Helper;
 
 namespace WebWeather.Models
 {
-    public class WeathersViewModel
+    public record WeathersViewModel
     {
-        public IEnumerable<Weather> Weathers { get; set; }
-        public PageViewModel PageViewModel { get; set; }
-        public FilterViewModel FilterViewModel { get; set; }
-        public SortViewModel SortViewModel { get; set; }
+        public IEnumerable<Weather> Weathers { get; init; }
+        public PageViewModel PageViewModel { get; init; }
+        public FilterViewModel FilterViewModel { get; init; }
+        public SortViewModel SortViewModel { get; init; }
 
         public static WeathersViewModel Create(WeathersFilter weathersFilter, List<Weather> items)
         {
-
             return new WeathersViewModel
             {
                 PageViewModel = new PageViewModel(weathersFilter),
                 SortViewModel = new SortViewModel(weathersFilter),
                 FilterViewModel = new FilterViewModel(weathersFilter),
-                Weathers = items
+                Weathers = items.Clone()
             };
         }
     }

@@ -92,16 +92,18 @@ namespace WebWeather.Controllers
         }
 
 
-        private static async Task<List<Weather>> GetSliceOfWeathers(WeathersFilter weathersFilter, IQueryable<Weather> weathers)
+        private static async Task<List<Weather>> GetSliceOfWeathers(WeathersFilter weathersFilter, IQueryable<Weather> weatherQuery)
         {
             var page = weathersFilter.page;
-            var pageSize = weathersFilter.pageSize;           
-            return await weathers.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var pageSize = weathersFilter.pageSize;
+            var newWeatherQuery = weatherQuery.AsQueryable();//Копия
+
+            return await newWeatherQuery.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         }
 
-        private static async Task<int> GetCountOfWeathers(IQueryable<Weather> weathers)
+        private static async Task<int> GetCountOfWeathers(IQueryable<Weather> weatherQuery)
         {
-            return await weathers.CountAsync();
+            return await weatherQuery.CountAsync();
         }
 
         private static IQueryable<Weather> GetWeatherQueryableBy(DataWeatherContext dataWeatherContext)
@@ -113,31 +115,34 @@ namespace WebWeather.Controllers
         {
             var year = weathersFilter.year;
             var month = weathersFilter.month;
+            var newWeatherQuery = weatherQuery.AsQueryable();//Копия
+
             if (year != null)
             {
-                weatherQuery = weatherQuery.Where(w => w.Date.Year == year);
+                newWeatherQuery = newWeatherQuery.Where(w => w.Date.Year == year);
             }
             if (month != null)
             {
-                weatherQuery = weatherQuery.Where(w => w.Date.Month == month);
+                newWeatherQuery = newWeatherQuery.Where(w => w.Date.Month == month);
             }
 
-            return weatherQuery;
+            return newWeatherQuery;
         }
 
         private static IQueryable<Weather> SortWeathersByOrderType(WeathersFilter weathersFilter, IQueryable<Weather> weatherQuery)
         {
+            var newWeatherQuery = weatherQuery.AsQueryable();//Копия
             switch (weathersFilter.sortOrder)
             {
                 case SortState.DateAsc:
-                    weatherQuery = weatherQuery.OrderBy(w => w.Date).ThenBy(w => w.Time);
+                    weatherQuery = newWeatherQuery.OrderBy(w => w.Date).ThenBy(w => w.Time);
                     break;
                 case SortState.DateDesc:
-                    weatherQuery = weatherQuery.OrderByDescending(w => w.Date).ThenByDescending(w => w.Time);
+                    weatherQuery = newWeatherQuery.OrderByDescending(w => w.Date).ThenByDescending(w => w.Time);
                     break;
             }
 
-            return weatherQuery;
+            return newWeatherQuery;
         }
 
         private ModelStateDictionary GetErrorsAboutParsingOfWeathers(List<ExcelError> weatherErrors, ModelStateDictionary modelState)

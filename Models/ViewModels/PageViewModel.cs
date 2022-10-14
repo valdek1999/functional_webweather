@@ -2,10 +2,10 @@
 
 namespace WebWeather.Models
 {
-    public class PageViewModel
+    public record PageViewModel
     {
-        public int PageNumber { get; private set; }
-        public int TotalPages { get; private set; }
+        public int PageNumber { get; private init; }
+        public int TotalPages { get; private init; }
 
         public PageViewModel(int count, int pageNumber, int pageSize)
         {

@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Collections.Generic;
-using WebWeather.DataAccess.Models;
 
 namespace WebWeather.Models
 {
-    public class FilterViewModel
+    public record FilterViewModel
     {
         public FilterViewModel(int? mouth, int? year)
         {
@@ -18,9 +16,9 @@ namespace WebWeather.Models
         {
 
         }
-        public SelectList Years { get; private set; } // список годов
-        public SelectList Mouth { get; private set; } // список месяцев
-        public int? SelectedMouth { get; private set; }   // выбранный месяц
-        public int? SelectedYear { get; private set; }    // выбранный год
+        public SelectList Years { get; private init; } // список годов
+        public SelectList Mouth { get; private init; } // список месяцев
+        public int? SelectedMouth { get; private init; }   // выбранный месяц
+        public int? SelectedYear { get; private init; }    // выбранный год
     }
 }

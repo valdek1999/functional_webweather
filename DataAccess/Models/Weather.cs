@@ -5,7 +5,7 @@ namespace WebWeather.DataAccess.Models
     /// <summary>
     /// Модель погоды. Группа: данные
     /// </summary>
-    public class Weather:Entity<int>
+    public class Weather:Entity<int>, ICloneable
     {
         /// <summary>
         /// Дата
@@ -66,5 +66,10 @@ namespace WebWeather.DataAccess.Models
         /// Погодные явления
         /// </summary>
         public string WeatherEvent { get; set; }
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
     }
 }

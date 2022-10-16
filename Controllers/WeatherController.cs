@@ -13,6 +13,7 @@ using WebWeather.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Collections.Generic;
 using WebWeather.Models.Excel;
+using WebWeather.Services.Helper;
 
 namespace WebWeather.Controllers
 {
@@ -60,26 +61,46 @@ namespace WebWeather.Controllers
         {
             try
             {
-                using var dataWeatherContext = WeatherContextFactory.CreateDbContext(); // Действие
-
-                IQueryable<Weather> weatherQuery = GetWeatherQuery(dataWeatherContext); // Вычисление - формирование дерева запроса
-                weatherQuery = FilterWeathersByDate(weathersFilter, weatherQuery); // Вычисление
-                weatherQuery = SortWeathersByOrderType(weathersFilter, weatherQuery);      // Вычисление
-
-                int count = await GetCountOfWeathers(weatherQuery); // Действие
-                List<Weather> weathersSlice = await GetSliceOfWeathers(weathersFilter, weatherQuery); // Действие
-
-                weathersFilter = weathersFilter with { count = count }; // Создаём новый объект данных на основе исходного
-                WeathersViewModel viewModel = WeathersViewModel.CreateWeathersViewModel(weathersFilter, weathersSlice); // Вычисление по созданию данных
+                weathersFilter = await CalulateWeathersFilter(weathersFilter); // Действие
+                WeathersViewModel viewModel = WeathersViewModel.CreateWeathersViewModel(weathersFilter); // Вычисление по созданию данных
                 return View(viewModel);
             }
             catch
             {
                 return RedirectToAction("Error");
             }
-        } 
-        
-        
+        }
+
+        private static async Task<WeathersFilter> CalulateWeathersFilter(WeathersFilter weathersFilter)
+        {
+            using var dataWeatherContext = WeatherContextFactory.CreateDbContext(); // Действие
+
+            IQueryable<Weather> weatherQuery = GetWeatherQuery(dataWeatherContext); // Вычисление - формирование дерева запроса
+            weatherQuery = FilterWeathersByDate(weathersFilter, weatherQuery); // Вычисление
+            weatherQuery = SortWeathersByOrderType(weathersFilter, weatherQuery);      // Вычисление
+
+            int count = await GetCountOfWeathers(weatherQuery); //Действие
+            List<Weather> weathersSlice = await GetSliceOfWeathers(weathersFilter, weatherQuery);//Действие
+
+            weathersFilter = SetCountForFilter(weathersFilter, count); //Вычисление
+            weathersFilter = SetWeathersSliceForFilter(weathersFilter, weathersSlice); //Вычисление
+
+            return weathersFilter;
+        }
+
+        private static WeathersFilter SetWeathersSliceForFilter(WeathersFilter weathersFilter, List<Weather> weathersSlice)
+        {
+            weathersFilter = weathersFilter with { weathersSlice = weathersSlice.CloneItems()};
+            return weathersFilter;
+        }
+
+        //метод 4го слоя
+        private static WeathersFilter SetCountForFilter(WeathersFilter weathersFilter, int count)
+        {
+            weathersFilter = weathersFilter with { count = count }; // Создаём копию объекта на основе исходного
+            return weathersFilter;
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

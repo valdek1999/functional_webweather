@@ -14,7 +14,7 @@ namespace WebWeather.Services
         //Действие т.к зависит от бд
         public static async Task<List<ExcelError>> LoadWeathersExcelToDb(IFormFileCollection files)
         {
-            List<ExcelError> excelErrors = new List<ExcelError>();
+            List<ExcelError> excelErrors = GetEmptyExcelErrors();
             using var dataWeatherContext = WeatherContextFactory.CreateDbContext();
 
             foreach (var excelBook in ExcelTransformer.TransformFilesToExcel(files))
@@ -26,11 +26,19 @@ namespace WebWeather.Services
                     {
                         return WeatherErrors;
                     }
-                    dataWeatherContext.AddRange(Weathers);
-                    await dataWeatherContext.SaveChangesAsync();
+                    await SaveWeathers(dataWeatherContext, Weathers);
                 }
             }
             return excelErrors;
+        }
+        public static List<ExcelError> GetEmptyExcelErrors()
+        {
+            return new List<ExcelError>(0);
+        }
+        private static async Task SaveWeathers(DataWeatherContext dataWeatherContext, List<Weather> Weathers)
+        {
+            dataWeatherContext.AddRange(Weathers);
+            await dataWeatherContext.SaveChangesAsync();
         }
     }
 }

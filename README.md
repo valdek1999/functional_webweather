@@ -5,7 +5,7 @@ Cхема до 2го семинара:
 ![Схема1ИзначальногоВариантаКода](https://user-images.githubusercontent.com/17438672/196062745-13b794ea-6116-42a8-aa3d-fe394b4a45e3.svg)
 Схема после 2го семинара:
 ---------------------------
-![Weather Diagram (1)](https://user-images.githubusercontent.com/17438672/196062738-47890e81-cecb-42f3-8e5b-b7b7e5c67bbc.svg)
+![Weather Diagram (2)](https://user-images.githubusercontent.com/17438672/196062829-b7f4ae1f-3fd1-4592-bd67-9870a747542e.svg)
 
 Требования к ПО
 ---------

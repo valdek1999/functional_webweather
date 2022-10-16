@@ -38,7 +38,7 @@ namespace WebWeather.Controllers
             try
             {
                 using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); // Действие, обращение к бд.
-                var excelErrors = await WeatherService.LoadExcelWithWeatherToDb(excelFiles, _dataWeatherContext); //Действие
+                var excelErrors = await WeatherService.LoadWeathersExcelToDb(excelFiles, _dataWeatherContext); //Действие
 
                 if (excelErrors?.Count == 0)
                 {
@@ -66,15 +66,15 @@ namespace WebWeather.Controllers
             {
                 using var dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); // Действие
 
-                IQueryable<Weather> weatherQuery = GetWeatherQueryableBy(dataWeatherContext); // Вычисление - формирование дерева запроса
-                weatherQuery = GetWeathersFilteredByYearAndMonth(weathersFilter, weatherQuery); // Вычисление
+                IQueryable<Weather> weatherQuery = GetWeatherQuery(dataWeatherContext); // Вычисление - формирование дерева запроса
+                weatherQuery = FilterWeathersByDate(weathersFilter, weatherQuery); // Вычисление
                 weatherQuery = SortWeathersByOrderType(weathersFilter, weatherQuery);      // Вычисление
 
                 int count = await GetCountOfWeathers(weatherQuery); // Действие
                 List<Weather> weathersSlice = await GetSliceOfWeathers(weathersFilter, weatherQuery); // Действие
 
                 weathersFilter = weathersFilter with { count = count }; // Создаём новый объект данных на основе исходного
-                WeathersViewModel viewModel = WeathersViewModel.Create(weathersFilter, weathersSlice); // Вычисление по созданию данных
+                WeathersViewModel viewModel = WeathersViewModel.CreateWeathersViewModel(weathersFilter, weathersSlice); // Вычисление по созданию данных
                 return View(viewModel);
             }
             catch
@@ -106,12 +106,12 @@ namespace WebWeather.Controllers
             return await weatherQuery.CountAsync();
         }
 
-        private static IQueryable<Weather> GetWeatherQueryableBy(DataWeatherContext dataWeatherContext)
+        private static IQueryable<Weather> GetWeatherQuery(DataWeatherContext dataWeatherContext)
         {
             return dataWeatherContext.Weather.AsQueryable();
         }
 
-        private static IQueryable<Weather> GetWeathersFilteredByYearAndMonth(WeathersFilter weathersFilter, IQueryable<Weather> weatherQuery)
+        private static IQueryable<Weather> FilterWeathersByDate(WeathersFilter weathersFilter, IQueryable<Weather> weatherQuery)
         {
             var year = weathersFilter.year;
             var month = weathersFilter.month;

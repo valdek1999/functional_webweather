@@ -19,7 +19,7 @@ namespace WebWeather.Services
         /// </summary>
         /// <param name="sheet"></param>
         /// <returns></returns>
-        public static (List<Weather> Weathers, List<ExcelError> WeatherErrors, bool HasSomeError) GetWeatherDataEnumerator(ISheet sheet)
+        public static (List<Weather> Weathers, List<ExcelError> WeatherErrors, bool HasSomeError) GetWeathersData(ISheet sheet)
         {
             var weathers = new List<Weather>();
             var startRow = SearchOfStartingRowBySheet(sheet);
@@ -28,7 +28,7 @@ namespace WebWeather.Services
             var hasSomeError = errors?.Count > 0;
             if(hasSomeError is not true)
             {
-                weathers = GetRows(sheet, startRow).Select(row => GetWeatherData(row)).ToList();
+                weathers = GetRows(sheet, startRow).Select(row => GetWeatherBy(row)).ToList();
             }
             return (weathers, errors, hasSomeError);
         }
@@ -37,7 +37,7 @@ namespace WebWeather.Services
         /// </summary>
         /// <param name="row"></param>
         /// <returns></returns>
-        private static Weather GetWeatherData(IRow row)
+        private static Weather GetWeatherBy(IRow row)
         {
             var date = row.GetCellFromRowByType(WeatherCell.Date).GetDateFromCell().Value;
             var time = row.GetCellFromRowByType(WeatherCell.Time).GetTimeFromCell().Value;

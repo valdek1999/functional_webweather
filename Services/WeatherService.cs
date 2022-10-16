@@ -12,7 +12,7 @@ namespace WebWeather.Services
     public static class WeatherService
     {
         //Действие т.к зависит от бд
-        public static async Task<List<ExcelError>> LoadExcelWithWeatherToDb(IFormFileCollection files, DataWeatherContext dataWeatherContext)
+        public static async Task<List<ExcelError>> LoadWeathersExcelToDb(IFormFileCollection files, DataWeatherContext dataWeatherContext)
         {
             List<ExcelError> excelErrors = new List<ExcelError>();
 
@@ -20,7 +20,7 @@ namespace WebWeather.Services
             {
                 foreach (var sheet in excelBook)
                 {
-                    var (Weathers, WeatherErrors, HasSomeError) = ExcelWeatherHandler.GetWeatherDataEnumerator(sheet);
+                    var (Weathers, WeatherErrors, HasSomeError) = ExcelWeatherHandler.GetWeathersData(sheet);
                     if (HasSomeError)
                     {
                         return WeatherErrors;

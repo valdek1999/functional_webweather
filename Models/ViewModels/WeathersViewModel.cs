@@ -11,14 +11,14 @@ namespace WebWeather.Models
         public FilterViewModel FilterViewModel { get; init; }
         public SortViewModel SortViewModel { get; init; }
 
-        public static WeathersViewModel Create(WeathersFilter weathersFilter, List<Weather> items)
+        public static WeathersViewModel CreateWeathersViewModel(WeathersFilter weathersFilter, List<Weather> items)
         {
             return new WeathersViewModel
             {
                 PageViewModel = new PageViewModel(weathersFilter),
                 SortViewModel = new SortViewModel(weathersFilter),
                 FilterViewModel = new FilterViewModel(weathersFilter),
-                Weathers = items.Clone()
+                Weathers = items.CloneItems()
             };
         }
     }

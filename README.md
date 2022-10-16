@@ -5,6 +5,7 @@ Cхема до 1го семинара:
 ---------
 ![Weather Diagram (2)](https://user-images.githubusercontent.com/17438672/196055101-eb1859a5-6432-4bb6-ba45-a45d35309077.svg)
 Cхема после выполнения 1го семинара:
+---------
 ![Weather Diagram (1)](https://user-images.githubusercontent.com/17438672/196055112-36014b6d-bc30-4ffd-b1c9-6248ddc150d4.svg)
 
 

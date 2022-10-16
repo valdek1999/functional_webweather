@@ -34,8 +34,7 @@ namespace WebWeather.Controllers
         {
             try
             {
-                using var _dataWeatherContext = WeatherContextFactory.CreateDbContext(); // Действие, обращение к бд.
-                var excelErrors = await WeatherService.LoadWeathersExcelToDb(excelFiles, _dataWeatherContext); //Действие
+                var excelErrors = await WeatherService.LoadWeathersExcelToDb(excelFiles); //Действие
 
                 if (excelErrors?.Count == 0)
                 {

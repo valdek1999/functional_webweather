@@ -12,9 +12,10 @@ namespace WebWeather.Services
     public static class WeatherService
     {
         //Действие т.к зависит от бд
-        public static async Task<List<ExcelError>> LoadWeathersExcelToDb(IFormFileCollection files, DataWeatherContext dataWeatherContext)
+        public static async Task<List<ExcelError>> LoadWeathersExcelToDb(IFormFileCollection files)
         {
             List<ExcelError> excelErrors = new List<ExcelError>();
+            using var dataWeatherContext = WeatherContextFactory.CreateDbContext();
 
             foreach (var excelBook in ExcelTransformer.TransformFilesToExcel(files))
             {

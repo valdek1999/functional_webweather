@@ -9,7 +9,7 @@ namespace WebWeather.DataAccess
     /// <summary>
     /// Класс с фабричный методом, вызывающийся при создании миграций
     /// </summary>
-    public class WeatherContextFactory : IDesignTimeDbContextFactory<DataWeatherContext>, IDbContextFactory<DataWeatherContext>
+    public class WeatherContextFactory : IDesignTimeDbContextFactory<DataWeatherContext>
     {
         public DataWeatherContext CreateDbContext(string[] args)
         {
@@ -22,7 +22,7 @@ namespace WebWeather.DataAccess
             return new DataWeatherContext(optionsBuilder.Options, true);
         }
 
-        public DataWeatherContext CreateDbContext()
+        public static DataWeatherContext CreateDbContext()
         {
             var settings = new Settings();
             settings.SetFromEnvironmentVariables();

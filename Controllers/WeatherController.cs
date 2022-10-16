@@ -19,12 +19,9 @@ namespace WebWeather.Controllers
     public class WeatherController : Controller
     {
         private readonly ILogger<WeatherController> _logger;
-
-        private readonly IDbContextFactory<DataWeatherContext> _dataWeatherContextFactory;
-        public WeatherController(ILogger<WeatherController> logger, IDbContextFactory<DataWeatherContext> dataWeatherContextFactory)
+        public WeatherController(ILogger<WeatherController> logger)
         {
             _logger = logger;
-            _dataWeatherContextFactory = dataWeatherContextFactory;
         }
 
         public IActionResult ExcelLoader()
@@ -37,7 +34,7 @@ namespace WebWeather.Controllers
         {
             try
             {
-                using var _dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); // Действие, обращение к бд.
+                using var _dataWeatherContext = WeatherContextFactory.CreateDbContext(); // Действие, обращение к бд.
                 var excelErrors = await WeatherService.LoadWeathersExcelToDb(excelFiles, _dataWeatherContext); //Действие
 
                 if (excelErrors?.Count == 0)
@@ -64,7 +61,7 @@ namespace WebWeather.Controllers
         {
             try
             {
-                using var dataWeatherContext = _dataWeatherContextFactory.CreateDbContext(); // Действие
+                using var dataWeatherContext = WeatherContextFactory.CreateDbContext(); // Действие
 
                 IQueryable<Weather> weatherQuery = GetWeatherQuery(dataWeatherContext); // Вычисление - формирование дерева запроса
                 weatherQuery = FilterWeathersByDate(weathersFilter, weatherQuery); // Вычисление

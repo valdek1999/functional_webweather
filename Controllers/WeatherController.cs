@@ -33,41 +33,45 @@ namespace WebWeather.Controllers
         [HttpPost]
         public async Task<IActionResult> AddFile(IFormFileCollection excelFiles)
         {
-            try
-            {
-                var excelErrors = await WeatherService.LoadWeathersExcelToDb(excelFiles); //Действие
-
-                if (excelErrors?.Count == 0)
-                {
-                    _logger.LogInformation($"Controller{nameof(WeatherController)}. Загрузка файлов в бд успешно завершилась.");//Действие
-                    return Ok();
-                }
-                else
-                {
-                    var modelStateWithErros = GetErrorsAboutParsingOfWeathers(excelErrors, ModelState);// Вычисление
-                    return BadRequest(modelStateWithErros);
-                }
-            }
-            catch (Exception ex)
-            {
-                //действие лог зависит от внешнего вызов(файла с ошибкой)
-                _logger.LogError($"Controller{nameof(WeatherController)}. Error: {ex.Message}.");
-                return StatusCode(500);
-            }
+            return await WithLogging<IActionResult>(
+                mainAction: async () => {
+                    var excelErrors = await WeatherService.LoadWeathersExcelToDb(excelFiles); //Действие
+                    if (excelErrors?.Count == 0)
+                    {
+                        _logger.LogInformation($"Controller{nameof(WeatherController)}. Загрузка файлов в бд успешно завершилась.");//Действие
+                        return Ok();
+                    }
+                    else
+                    {
+                        var modelStateWithErros = GetErrorsAboutParsingOfWeathers(excelErrors, ModelState);// Вычисление
+                        return BadRequest(modelStateWithErros);
+                    }
+                },
+                errorResponce: () => StatusCode(500));
         }
 
         [HttpGet]
         public async Task<IActionResult> Weathers([FromQuery]WeathersFilter weathersFilter)
         {
+            return await WithLogging<IActionResult>(
+                mainAction: async () => {
+                    weathersFilter = await CalulateWeathersFilter(weathersFilter);
+                    WeathersViewModel viewModel = WeathersViewModel.CreateWeathersViewModel(weathersFilter);
+                    return View(viewModel);
+                },
+                errorResponce: () => RedirectToAction("Error"));
+        }
+
+        public async Task<T> WithLogging<T>(Func<Task<T>> mainAction, Func<T> errorResponce)
+        {
             try
             {
-                weathersFilter = await CalulateWeathersFilter(weathersFilter); // Действие
-                WeathersViewModel viewModel = WeathersViewModel.CreateWeathersViewModel(weathersFilter); // Вычисление по созданию данных
-                return View(viewModel);
+                return await mainAction.Invoke();
             }
-            catch
+            catch(Exception ex)
             {
-                return RedirectToAction("Error");
+                _logger.LogError($"Controller{nameof(WeatherController)}. Error: {ex.Message}.");
+                return errorResponce.Invoke();
             }
         }
 

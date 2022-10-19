@@ -12,5 +12,12 @@ namespace WebWeather.Services.Helper
         {
             return listToClone.Select(item => (T)item.Clone()).ToList();
         }
+
+        public static T OperationWithCopy<T>(this T entity, Action<T> actionModify)
+        {
+            var copy = entity.Copy();
+            actionModify(copy);
+            return copy;
+        }
     }
 }

@@ -168,13 +168,15 @@ namespace WebWeather.Controllers
 
         private ModelStateDictionary GetErrorsAboutParsingOfWeathers(List<ExcelError> weatherErrors, ModelStateDictionary modelState)
         {
-            var model = modelState.Copy();
-            weatherErrors.ForEach(error => model.AddModelError($"Ошибка в ячейке {error.TypeCell}",
-                                                               $"Лист:{error.Sheet}; " +
-                                                               $"Строка:{error.Row}; " +
-                                                               $"Столбец:{error.Column};"));
-            return model;
+            return modelState.OperationWithCopy( (model) => {
+                weatherErrors.ForEach(error => model.AddModelError($"Ошибка в ячейке {error.TypeCell}",
+                                                                   $"Лист:{error.Sheet}; " +
+                                                                   $"Строка:{error.Row}; " +
+                                                                   $"Столбец:{error.Column};"));
+            });
         }
+
+
     }
 }
 
